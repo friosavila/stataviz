@@ -4,7 +4,12 @@ Enjoy!
 
 ## color_palette and font_style
 
-This first command is a wrapper around Ben Jann's colorpalette and grstyle. It aims to provide an easy way to change colors in your favorite scheme, or even use your own.
+This first command is a wrapper around Ben Jann's colorpalette and grstyle. It aims to provide an easy way to change colors in your favorite scheme, or even use your own. You can start by installing from ssc
+
+```stata
+ssc install color_style, replace
+```
+
 
 For example
 
