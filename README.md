@@ -83,5 +83,5 @@ color_style #b20003 #044d0f #dfb000 #004485 #151515
 graph pie mpg, over(rep78) title(Hogwarts School) ///
 legend(order(1 "Gryffindor" 2 "Hufflepuff" 3 "Ravenclaw" 4 "Slytherin" 5 "Muggles"))
 ```
-![scatter_5](./figures/pie_5.png)
+![pie_6](./figures/pie_6.png)
 
