@@ -1,6 +1,7 @@
 ** Need to make Colors easier.
 ** and Separate Colros for RBAR from RAREA
 
+*! v1.31 by FRA fix for varabbref
 *! v1.3 by FRA adds more control and transform data
 *! v1.2 by FRA Adjusts Labels
 *! v1.11 by FRA Sorts
@@ -23,13 +24,21 @@ capture mata mata  drop sdlong()
 
 program sankey_plot
 	syntax anything(everything), [* wide tight]
-	if "`wide'"!="" {
-		sankey_wide `anything', `tight' `options'
+	varabbrev  {
+		if `c(stata_version)'<16 {
+			display "You need Stata 16 or higher to use this command"
+			error 9
+		}
+		
+		if "`wide'"!="" {
+			sankey_wide `anything', `tight' `options'
+		}
+		else {
+			
+			sankey_i2 `anything', `options'
+		 
+		}
 	}
-	else {
-		sankey_i2 `anything', `options'
-	}
-	
 	if runiform()<0.001 {
 		easter_egg
 	}
