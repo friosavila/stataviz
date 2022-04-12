@@ -2,6 +2,14 @@
 This is just a repository for some takes of mine on producing Data Vizualizations, inspired by Asjad Naqvi, who is trying to bring more color to your Stata visualizations. 
 Enjoy!
 
+the other packages
+- joyplots (https://github.com/friosavila/stataviz/blob/main/joyplot.md)
+- mscatter (https://github.com/friosavila/stataviz/blob/main/mscatter.md)
+- ridgeline (https://github.com/friosavila/stataviz/blob/main/ridgeline.md)
+- sankey plot (https://github.com/friosavila/stataviz/blob/main/sankey.md)
+- Extra: spirograph (https://github.com/friosavila/stataviz/blob/main/spirograph.md)
+
+
 ## color_palette and font_style
 
 This first command is a wrapper around Ben Jann's colorpalette and grstyle. It aims to provide an easy way to change colors in your favorite scheme, or even use your own. You can start by installing from ssc
