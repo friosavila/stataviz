@@ -85,7 +85,7 @@ but I always had to go back and remeber this. So it may be easier to remeber, th
 
 
 ```
-font_style Arial Narrow
+font_style Harrington
 * Hogwarts Colors
 color_style #b20003 #044d0f #dfb000 #004485 #151515
 graph pie mpg, over(rep78) title(Hogwarts School) ///
