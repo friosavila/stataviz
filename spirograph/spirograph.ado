@@ -1,6 +1,6 @@
 *! v0 Spyrigraph
 *capture program drop spyrograph
-program spyrograph
+program spirograph
 	syntax, R(numlist min=1 ) S(numlist min=1 ) ///
 			[R1(numlist min=1 ) S1(numlist min=1 ) ///
 			R2(numlist min=1 ) S2(numlist min=1 ) ///
