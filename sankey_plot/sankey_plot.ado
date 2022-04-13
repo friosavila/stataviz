@@ -8,7 +8,7 @@
 *! v1.1 by FRA allows Extra Adjustment
 * v1.01 by FRA allows for NO coordinates
 * Think about Floor adjustment
-capture program drop encode2
+/*capture program drop encode2
 capture program drop sankey_plot
 capture program drop easter_egg
 capture mata:mata drop encode2()
@@ -20,7 +20,7 @@ capture program drop change_names
 capture program drop extra_adj
 capture program drop sankey_i2
 capture program drop sankey_wide
-capture mata mata  drop sdlong()
+capture mata mata  drop sdlong()*/
 
 program sankey_plot
 	syntax anything(everything), [* wide tight]
