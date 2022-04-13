@@ -1,3 +1,5 @@
+*! v1.1 Fixes Stack. To show total numbers not adjusted ones
+*! v1 Ridgeline Plot 4/11/2022 FRA
 * Need to create submodules!
 * Like joyplot but for lines. Together lines. area lines.? Stack area?
 * stream
@@ -61,6 +63,11 @@ program _over, rclass
 end
 
 program ridgeline_plot
+
+	if `c(stata_version)'<16 {
+		display "You need Stata 16 or higher to use this command"
+		error 9
+	}
 	syntax varlist(min=2 max=2) [if] [in] [iw/], over(varname) [ ///
 	radj(real 0)   /// Range Adjustment. How much to add or substract to the top bottom.
 	range(numlist min=2 max=2) ///
@@ -182,6 +189,7 @@ program ridgeline_plot
 			replace `f`cn''=0 if `f`cn''<0 
 			qui:sum `f`cn'', meanonly		
 			if r(max)>`fmax' local fmax = r(max)	
+
 		}
 
 		if "`stack'`stack100'`stream'`stream1'"!="" local fmax=1
@@ -194,6 +202,7 @@ program ridgeline_plot
 
 		** only what is needed
 		keep if rvar!=.
+		
 		******************************************************************************************************************* s5: Rescale Densities if necessary
 		
 		if "`normalize'"!="" {
@@ -201,14 +210,15 @@ program ridgeline_plot
 				local cnx     = `cnx'+1
 				sum  `f`cnx'', meanonly
 				replace `f`cnx''=`f`cnx''/r(max)
+
 			}
 			local fmax=1
 		}
 		
 		local cnt = `cn'
 		local cn = 0
-		
-		
+		*** if any of this, then no need to adjust height
+		if "`stack'`stack100'`stream'`stream1'"=="" {
 			foreach i of local lvl {
 				local cn     = `cn'+1
 				*display in w "qui: replace `f`cn''=(`f`cn''/`fmax') * `dadj'/`cnt' + 1/`cnt'*(`cnt'-`cn')*`gp'"
@@ -216,8 +226,9 @@ program ridgeline_plot
 				tempvar f0`cn'
 				gen `f0`cn'' = 1/`cnt' * (`cnt'-`cn') * `gp'        if rvar!=.
 			}
+		}
 		
-		
+	
 		** s6: Rescale Densities if necessary by graphtype
 		****************************
 		if "`stack'"!="" {
@@ -229,12 +240,12 @@ program ridgeline_plot
 			foreach i of local lvl {
 				local cn_1   = `cn'
 				local cn     = `cn'+1
+				
 				if `cn'>1 {
 					qui: replace `f`cn''=`f`cn_1''+`f`cn'' 
 					tempvar f0`cn'
 					gen `f0`cn'' =`f`cn_1''         if rvar!=.
-				}
- 
+				} 
 			}
 		}
 		else if "`stack100'"!=""{
@@ -315,7 +326,7 @@ program ridgeline_plot
 			local cn = 1
 			
 			foreach i of local lvl {				
-				local lbl: label (over) `i', `strict'
+				local lbl: label (over_) `i', `strict'
 				local aleg `aleg' `cn' `"`lbl'"'
 				local cn     = `cn'+1
 			}
