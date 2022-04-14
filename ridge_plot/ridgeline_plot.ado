@@ -1,3 +1,4 @@
+*! v1.11 Fixes gap0. and adds line
 *! v1.1 Fixes Stack. To show total numbers not adjusted ones
 *! v1 Ridgeline Plot 4/11/2022 FRA
 * Need to create submodules!
@@ -83,7 +84,7 @@ program ridgeline_plot
 	color(string asis)   /// only colorlist
 	colorpalette(string asis) /// Uses Benjann's Colors with all the options. 
 	strict notext right  textopt(string) ///
-	gap0 alegend ///
+	gap0 alegend line ///
     fcolor(passthru)        ///  fill color and opacity
     fintensity(passthru) 	///  fill intensity
     lcolor(passthru)        ///  outline color and opacity
@@ -221,8 +222,8 @@ program ridgeline_plot
 		if "`stack'`stack100'`stream'`stream1'"=="" {
 			foreach i of local lvl {
 				local cn     = `cn'+1
-				*display in w "qui: replace `f`cn''=(`f`cn''/`fmax') * `dadj'/`cnt' + 1/`cnt'*(`cnt'-`cn')*`gp'"
-				qui: replace `f`cn''=(`f`cn''/`fmax') * `dadj'/`cnt' + 1/`cnt'*(`cnt'-`cn')*`gp'
+				if "`gap0'"=="" qui: replace `f`cn''=(`f`cn''/`fmax') * `dadj'/`cnt' + 1/`cnt'*(`cnt'-`cn')*`gp'
+				if "`gap0'"!="" qui: replace `f`cn''=(`f`cn''/`fmax') 
 				tempvar f0`cn'
 				gen `f0`cn'' = 1/`cnt' * (`cnt'-`cn') * `gp'        if rvar!=.
 			}
@@ -342,9 +343,10 @@ program ridgeline_plot
 			foreach i of local lvl {
 				local cn = `cn'+1
 				local ll:word `cn' of `r(p)'
-				
-				local joy `joy' (rarea `f`cn'' `f0`cn'' rvar, color(`"`ll'"') ///
+				if "`line'"=="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar, color(`"`ll'"') ///
 								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal')  
+				if "`line'"!="" local joy `joy' (line  `f`cn''  rvar, color(`"`ll'"') ///
+								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal')  				
 			}
 		}
 		else if `"`color'"'!="" {
@@ -353,8 +355,10 @@ program ridgeline_plot
 			foreach i of local lvl {
 				local cn = `cn'+1
 				if `cn'<=`:word count `color'' 	local ll:word `cn' of `color'
-				local joy `joy' (rarea `f`cn'' `f0`cn'' rvar,  `lcolor' `lwidth' color(`"`ll'"') ///
+				if "`line'"==""  local joy `joy' (rarea `f`cn'' `f0`cn'' rvar,  `lcolor' `lwidth' color(`"`ll'"') ///
 								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal')  
+				if "`line'"!=""  local joy `joy' (line `f`cn''  rvar,  `lcolor' `lwidth' color(`"`ll'"') ///
+								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal') 				
 			}
 		}
 		else {
@@ -364,9 +368,10 @@ program ridgeline_plot
 				local cn = `cn'+1
 				local cn2 = `cn2'+1
 				if `cn2'>15 local cn2 = 1
-				local joy `joy' (rarea `f`cn'' `f0`cn'' rvar,  ///
-								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' ///
-								 pstyle(p`cn2') `horizontal') 
+				if "`line'"=="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar,  ///
+								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle'  pstyle(p`cn2') `horizontal') 
+				if "`line'"!="" local joy `joy' (line  `f`cn''  rvar,  ///
+								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle'  pstyle(p`cn2') `horizontal') 				
 			}			
 		}
 		***************************************************************************************************************
@@ -378,7 +383,7 @@ program ridgeline_plot
 		
 		two `joy' (`addplot'), ///
 			text(`totext' , `textopt') ///
-			`options' `leg' `ylabx' `xlabvio'
+			`options' `leg' `ylabx' `xlabvio' 
 
 	}
 	

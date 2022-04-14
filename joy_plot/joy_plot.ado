@@ -1,4 +1,4 @@
-* Need to create submodules!
+*! v1.3 Fixes gap0
 *! v1.2 Fixes rangeasis. No longer needed
 *! v1.1 Wages by Race. Fixes kden
 *! v1 Wages by Race
@@ -62,6 +62,12 @@ program _over, rclass
 end
 
 program joy_plot
+
+	if `c(stata_version)'<16 {
+		display "You need Stata 16 or higher to use this command"
+		error 9
+	}
+	
 	syntax varname [if] [in] [aw/], [over(varname) ///
 	radj(real 0)   /// Range Adjustment. How much to add or substract to the top bottom.
 	range(numlist min=2 max=2) ///
@@ -168,7 +174,8 @@ program joy_plot
 		local cn = 0
 		foreach i of local lvl {
 			local cn     = `cn'+1
-			qui: replace `f`cn''=(`f`cn''/`fmax') * `dadj'/`cnt' + 1/`cnt'*(`cnt'-`cn')*`gp'*`vm'
+			if "`gap0'"=="" qui: replace `f`cn''=(`f`cn''/`fmax') * `dadj'/`cnt' + 1/`cnt'*(`cnt'-`cn')*`gp'*`vm'
+			if "`gap0'"!="" qui: replace `f`cn''=(`f`cn''/`fmax')                
 			tempvar f0`cn'
 			gen `f0`cn'' = 1/`cnt' * (`cnt'-`cn') * `gp' * `vm'    if `rvar'!=.
 		}
