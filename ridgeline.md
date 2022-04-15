@@ -83,12 +83,48 @@ ylabel("")
 ```
 ![rig_6](./figures/ridge6.png)
 
+Other enhancements
+Draw lines rather than areas:
 
+```
+ridgeline_plot new_deaths date, over(country) ///
+normalize /// Normalizes height within country
+notext alegend /// automatic legend
+dadj(3) /// and allows for overlap
+ytitle("") line // Draws lines rather than areas
+```
 
+![rig_7](./figures/ridge7.png)
 
+Or draw them with White background
+```
+ridgeline_plot new_deaths date, over(country) ///
+normalize /// Normalizes height within country
+notext alegend /// automatic legend
+bwadj2(0.5) /// adjusts ALL Bandwidths
+dadj(3) /// and allows for overlap
+ytitle("") line /// Draws lines rather than areas
+colorpalette(cividis) ///
+white // and uses WHite background
+```
 
+![rig_9](./figures/ridge8.png)
 
+Or draw them or black background
 
+```
+set scheme black
+ridgeline_plot new_deaths date, over(country) ///
+normalize /// Normalizes height within country
+notext alegend /// automatic legend
+bwadj2(0.5) /// adjusts ALL Bandwidths
+dadj(3) /// and allows for overlap
+ytitle("") line /// Draws lines rather than areas
+colorpalette(hue) ///
+black // and uses black background
+```
+
+![rig_8](./figures/ridge9.png)
 
 
 

@@ -1,3 +1,4 @@
+*! v1.12 Adds White and black as background.
 *! v1.11 Fixes gap0. and adds line
 *! v1.1 Fixes Stack. To show total numbers not adjusted ones
 *! v1 Ridgeline Plot 4/11/2022 FRA
@@ -84,7 +85,7 @@ program ridgeline_plot
 	color(string asis)   /// only colorlist
 	colorpalette(string asis) /// Uses Benjann's Colors with all the options. 
 	strict notext right  textopt(string) ///
-	gap0 alegend line ///
+	gap0 alegend line white black ///
     fcolor(passthru)        ///  fill color and opacity
     fintensity(passthru) 	///  fill intensity
     lcolor(passthru)        ///  outline color and opacity
@@ -104,7 +105,7 @@ program ridgeline_plot
 	if "`kernel'"=="" local kernel tri
 	if "`bwadj'"=="" local bwadj=0
 	if "`stream'`stream1'"!="" & "`stack'`stack100'"=="" local stack stack
-	
+	if "`black'"!="" local black gs1
 	
 	tempname frame
 	frame put `varlist' `over' `exp'  if `touse', into(`frame') 
@@ -323,13 +324,14 @@ program ridgeline_plot
 		** how to write text?
 		
 		** Auto Legend
+		if "`white'`black'"!="" local wb=1
 		if "`alegend'"!="" {
-			local cn = 1
+			local cn = 1+0`wb'
 			
 			foreach i of local lvl {				
 				local lbl: label (over_) `i', `strict'
 				local aleg `aleg' `cn' `"`lbl'"'
-				local cn     = `cn'+1
+				local cn     = `cn'+1+0`wb'
 			}
 		}
 		** colors
@@ -343,10 +345,13 @@ program ridgeline_plot
 			foreach i of local lvl {
 				local cn = `cn'+1
 				local ll:word `cn' of `r(p)'
+				if "`white'`black'"!="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar, color(`white'`black') ///
+								fintensity(100) lwidth(none) `horizontal')
 				if "`line'"=="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar, color(`"`ll'"') ///
 								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal')  
 				if "`line'"!="" local joy `joy' (line  `f`cn''  rvar, color(`"`ll'"') ///
 								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal')  				
+				  								
 			}
 		}
 		else if `"`color'"'!="" {
@@ -355,10 +360,14 @@ program ridgeline_plot
 			foreach i of local lvl {
 				local cn = `cn'+1
 				if `cn'<=`:word count `color'' 	local ll:word `cn' of `color'
+				if "`white'`black'"!="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar, color(`white'`black') ///
+								fintensity(100) lwidth(none) `horizontal')
 				if "`line'"==""  local joy `joy' (rarea `f`cn'' `f0`cn'' rvar,  `lcolor' `lwidth' color(`"`ll'"') ///
 								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal')  
 				if "`line'"!=""  local joy `joy' (line `f`cn''  rvar,  `lcolor' `lwidth' color(`"`ll'"') ///
-								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal') 				
+								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle' `horizontal') 
+				/*if "`white'`black'"!="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar, color(`white'`black') ///
+								fintensity(100) lwidth(none) `horizontal')  */				
 			}
 		}
 		else {
@@ -368,10 +377,14 @@ program ridgeline_plot
 				local cn = `cn'+1
 				local cn2 = `cn2'+1
 				if `cn2'>15 local cn2 = 1
+				if "`white'`black'"!="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar, color(`white'`black') ///
+								fintensity(100) lwidth(none) `horizontal')
 				if "`line'"=="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar,  ///
 								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle'  pstyle(p`cn2') `horizontal') 
 				if "`line'"!="" local joy `joy' (line  `f`cn''  rvar,  ///
-								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle'  pstyle(p`cn2') `horizontal') 				
+								`fcolor' `fintensity' `lcolor' `lwidth' `lpattern' `lalign' `lstyle'  pstyle(p`cn2') `horizontal') 	
+				/*if "`white'`black'"!="" local joy `joy' (rarea `f`cn'' `f0`cn'' rvar, color(`white'`black') ///
+								fintensity(100) lwidth(none) `horizontal') */								
 			}			
 		}
 		***************************************************************************************************************
