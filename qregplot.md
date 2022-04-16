@@ -7,6 +7,8 @@ This version provides has a few updates to make graphs better looking from the s
 
 This page can be considered as an extended version of the qregplot help file.
 
+Also, I hope the update will be available soon on SSC, but in the mean time, you can copy them from this repository
+
 ## The Setup
 
 To work with the following examples, you will need to either or install the following:
