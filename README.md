@@ -7,6 +7,7 @@ the other packages
 - mscatter (https://github.com/friosavila/stataviz/blob/main/mscatter.md)
 - ridgeline (https://github.com/friosavila/stataviz/blob/main/ridgeline.md)
 - sankey plot (https://github.com/friosavila/stataviz/blob/main/sankey.md)
+- qregplot (https://github.com/friosavila/stataviz/blob/main/qregplot.md)
 - Extra: spirograph (https://github.com/friosavila/stataviz/blob/main/spirograph.md)
 
 
