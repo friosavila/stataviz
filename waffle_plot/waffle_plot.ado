@@ -1,13 +1,42 @@
-*! v1 Waffle_plot. Simple Waffle plot
-capture program drop waffle_plot
+*! v1.1 Waffle_plot. adds default size
+* v1 Waffle_plot. Simple Waffle plot
+/*capture program drop waffle_plot
 capture program drop waffle_i
 capture program drop mbyparser
-capture program drop make_shares
+capture program drop make_shares*/
+ 
+program default, rclass
+	syntax, [msize(str asis) msymbol(str asis) xnobs(int 0) ynobs(int 0) over(str) * ]
+	tempvar x xx
+	gen byte `x'=1
+	bysort `x' `over':gen  `xx'=_n
+	sum `xx' if `xx'==1, meanonly
+	local nover = ceil(sqrt(`r(N)'))
+	local nnobx = max(`xnobs',`ynobs')*(`nover')
+	if `"`msize'"'=="" {
+		if !inlist("`msymbol'","square","smsquare","square_hollow","smsquare_hollow") & ///
+		   !inlist("`msymbol'","S","s","sh","Sh") local msize `=100/`nnobx''
+		else local msize `=75/`nnobx''
+	}
+	return local msize  msize(`msize')
+end
 
+*** Waffle_i as i-command
 program waffle_i
 	syntax anything, [nobs(int 0) xnobs(int 0) ynobs(int 0) * ///
-			sctopt(string asis) flip ///
-			color(str asis) pstyle(str) color0(str asis) amargin(real 0) rseed(int 0) legend(str asis)]
+			SCTopt(string asis) flip ///
+			color(str asis) pstyle(str) ///
+			color0(str asis) amargin(real 0) ///
+			msymbol(passthru)        	///
+			msize(passthru)    		  	///
+			msangle(passthru)			///
+			mfcolor(passthru)         	///
+			mlcolor(passthru)         	///
+			mlwidth(passthru)     		///
+			mlalign(passthru)     		///
+			mlstyle(passthru)           ///
+			mstyle(passthru)         	///
+			rseed(int 0) legend(str asis)]
 	** define dimensions
 	numlist "`anything'", range(>=0 <=100 )
 	local value `r(numlist)'
@@ -27,6 +56,14 @@ program waffle_i
 		if `xnobs'==0 local xnobs=10
 		if `ynobs'==0 local ynobs=10
 	}
+	
+	** SCT opts
+	local sctopt `sctopt' `msymbol' `msize' `msangle' `mfcolor' `mlcolor' `mlwidth' `mlalign' `mlstyle' `mstyle' 
+	
+	default , `sctopt' xnobs(`xnobs') ynobs(`xnobs')
+	local sctopt `sctopt' `r(msize)'
+	** create FR
+	
 	tempname fr
 	frame create `fr'
 	qui:frame `fr':{
@@ -70,8 +107,8 @@ program waffle_i
 		}
 			
 			local sct `sct' (scatter y x if flag==0, `sctopt' mc(`color0') )
-	   local xmrg = `=0.5*`xnobs'+`amargin''
-	   local ymrg = `=0.5*`ynobs'+`amargin'*`ynobs'/`xnobs''	
+		   local xmrg = `=0.5*`xnobs'+`amargin''
+		   local ymrg = `=0.5*`ynobs'+`amargin'*`ynobs'/`xnobs''	
 		   if "`flip'"!="" {
 			ren (y x) (x y)
 			local aux   = `ynobs'
@@ -122,11 +159,30 @@ program make_shares
 end
 
 program waffle_plot
+
+	if `c(stata_version)'<16 {
+		display "You need Stata 16 or higher to use this command"
+		error 9
+	}
+	
 	syntax anything [if] [in] [aw/], ///
 			[by(string asis) nobs(int 0) xnobs(int 0) ynobs(int 0)  ///  
 			SCTopt(string asis)  /// scatter options
 			color(str asis) pstyle(str ) color0(str asis) /// other color options
 			amargin(real 0) rseed(int 0) ///
+			msymbol(passthru)        	/// <--- Other SCT options
+			msize(passthru)    		  	///
+			msangle(passthru)			///
+			mfcolor(passthru)         	///
+			mlcolor(passthru)         	///
+			mlwidth(passthru)     		///
+			mlalign(passthru)     		///
+			mlstyle(passthru)           /// 
+			mstyle(passthru)         	/// <--- Fin other options
+		    title(passthru)                ///         overall title
+			subtitle(passthru)             ///         subtitle of title
+			note(passthru)                 ///         note about graph
+			caption(passthru)              ///         explanation of graph
 			legend(string asis) flip * newframe(name) TOTAL TOTAL1(varname) INDividual]
 
 	** colorpalette(string asis) /// colorpalette			
@@ -141,8 +197,7 @@ program waffle_plot
 	if _rc==0 	{
 		waffle_i `0'
 		exit
-	}
-	 
+	}	 
 	else {
 		foreach i of varlist `anything' {
 			local nvl `nvl' `i'
@@ -151,9 +206,10 @@ program waffle_plot
 		confirm var `nvl'
 		marksample touse
 		markout `touse' `anything' `exp' `over' `total1', strok
+		** check all variables are less than 100
 		if "`total'`total1'"=="" {
  			foreach i of varlist `anything' {
-				sum `i' if `touse', meanonly
+				qui:sum `i' if `touse', meanonly
 				if `r(max)'>100 {
 					display in red "There are values Larger than 100 in the varlist"
 					error 999
@@ -162,7 +218,7 @@ program waffle_plot
 		}	
 	}
 	
-	 
+	** Determine size 
 	if `nobs'!=0 {
 		local xnobs = `nobs'
 		local ynobs = `nobs'
@@ -176,6 +232,13 @@ program waffle_plot
 	
 	frame put `anything' `exp' `over' `total1' if `touse', into(`newframe')
 	
+	** sct opts
+	local sctopt `sctopt' `msymbol' `msize' `msangle' `mfcolor' `mlcolor' `mlwidth' `mlalign' `mlstyle' `mstyle'
+	
+	default , `sctopt' xnobs(`xnobs') ynobs(`xnobs') over(`over')
+	local sctopt `sctopt' `r(msize)'
+	** by opt
+	local byopt `byopt' `title' `subtitle' `note' `caption'
 	
 	qui: frame `newframe':{
 		** Step 1: Get "means"
@@ -208,9 +271,11 @@ program waffle_plot
 			collapse `stat' `anything' `total1' `wgt', by(`xx' `over') fast
 		}
 	 
+	 ** check if Totals activated
 		if "`total'`total1'"!="" & "`individual'"=="" make_shares `anything', `total' ototal(`total1')
+	*** Defaults
 		
-		** check if Totals activated
+		
 		
 		** Step2 Exapnd
 		expand `ynobs'
@@ -286,16 +351,18 @@ program waffle_plot
 			aspect(`=`ynobs'/`xnobs'') ///	
 			by(`over', `byopt' noiylabel noixlabel noixtick noiytick `mlg'   ) ///
 			xscale(noline) yscale(noline) ytitle("") xtitle("")	`options' ///
-			xscale( range(-`xmrg'  `xmrg') ) yscale( range(-`ymrg'  `ymrg') ) legend(`legend')  xlabel(,nogrid) ylabel(,nogrid)
+			xscale( range(-`xmrg'  `xmrg') ) yscale( range(-`ymrg'  `ymrg') ) legend(`legend')  xlabel("",nogrid) ylabel("",nogrid)
 	   }
 	   else {
 			two `sct' , ///
 			aspect(`=`ynobs'/`xnobs'')  ///	
 			xscale(noline) yscale(noline) ytitle("") xtitle("")	`options' ///
 			xscale( range(-`xmrg'  `xmrg') ) yscale( range(-`ymrg'  `ymrg') ) `mlg' legend(`legend')  ///
-			xlabel("",nogrid) ylabel("",nogrid) 
+			xlabel("",nogrid) ylabel("",nogrid) `byopt'
 	   }
 	   
+
+
 	}
 end
 
