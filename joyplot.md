@@ -9,6 +9,7 @@ So first installation:
 ```
 ssc install joy_plot, replace
 ```
+However, the latest version will be found on this repository!
 
 ## Example 
 
@@ -67,8 +68,44 @@ joy_plot lnwage, over(mstatus) dadj(1) legend(cols(3))  violin legend(off) iqr
 
 But of course, if you looking into Joyplots, what you are after is something visually shocking. So what about the following:
 ```
+qui:color_style, list  // <--- This Loads the palettes into memory
 joy_plot lnwage, over(educ) dadj(3)  /// as before, with 3x the hight adjusment
 bwadj2(.5) right /// setting text to the right, and using half of the automatic bandwidth
 colorpalette(vangogh1, opacity(80)) lcolor(white) // and using custome palette vangogh1
 ```
 ![joy6](./figures/joy6.png)
+
+## New features!!
+
+So, thanks to Eric Melse, I added a few new options to joy_plot. Namely, a bit more control on the IQR lines, able to plot "half-violins", 
+as well as multiple densities per level. Also, You should be able to use this with Stata 14 as well! 
+
+For the fist example, Say you want to look and gender gap but by marital Status. Then you would do:
+
+```
+set scheme white
+color_style ozuna,  
+joy_plot lnwage, over(mstatus) /// As before plots by mstatus level
+by(female) /// but 2 subgroups by each over level
+dadj(2) alegend fcolor(%10)
+```
+
+![joy7](./figures/joy7.png)
+
+However, if you have only two **by** groups, then you could also produce half violin plot!.
+
+```
+joy_plot lnwage, over(mstatus) by(female) alegend ///
+violin fcolor(*.80) // As before, but now with violin option
+```
+![joy8](./figures/joy8.png)
+
+What about IQR control? What about adding 10th and 90th percentile, with a darker and wider line.
+
+```
+joy_plot lnwage, over(mstatus) by(female) alegend violin fcolor(*.80) /// as before 
+iqr(10 90) /// Request 10 and 90th percentiles instead of the 25 50 75
+iqrlcolor(*1.2) /// controls color properties (more intense)
+iqrlwidth(1) // controls the line thickness
+```
+![joy9](./figures/joy9.png)

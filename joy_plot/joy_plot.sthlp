@@ -19,6 +19,8 @@
 
 {synopt : {cmd: over(varname)}} Indicates a variable that defines the groups to be used for the joy_plot. If you omit this, you probably would prefer using {help kdensity} directly. See Descriptions for details. 
 
+{synopt : {cmd: by(varname)}} Indicates a variable that defines what groups to be ploted by. This creates multiple density plots for each level defined by over(). This variable can only take 2 values if using for violin plot. See Descriptions for details. 
+
 {marker opt}{synopthdr:joy_plot options}
 {synoptline}
 
@@ -33,11 +35,15 @@
 {synopt : {cmd:bwadj(#)}}Should be between 0 and 1. It is used to determine the bandwidth for each subplot. When bwadj=0, all plots use the simple Bandwidth average. When bwadj=1, all plots will use the bandwidth determined by kdensity. One can choose something intermediate.
 
 {synopt : {cmd:bwadj2(#)}}Any possitive number. It is use to change the Bandwith across all plots. One can, for example, modify all
-bandwidths to be half (bwdj2=0.5) of the one originally estimated. Default is 1.
+bandwidths to be half (bwadj2=0.5) of the one originally estimated. Default is 1.
+
+{synopt : {cmd:bwadj3(#)}}Any possitive number. It is used to define the bandwidth for all plots exogenously. For example bwadj3(0.5) sets the bandwidth to 0.5
+across all plots. This is the fastest option.
 
 {synopt : {cmd:kernel(kfun)}}This can be used to select a particular type of kernel function for the plots. Default is Gaussian.
 
-{synopt : {cmd:nobs(#)}}This is used to define how many points to be used for the plot. Larger number creates a smoother figure, but uses more memory. Default is 200.	
+{synopt : {cmd:nobs(#)}}This is used to define how many points to be used for the plot. Larger number creates a smoother figure, 
+but uses more memory. Default is 200.	
 
 {marker opt2}{synopthdr:Other options}
 {synoptline}
@@ -59,22 +65,30 @@ will not no text, if a value label is undefined.
 
 {synopt : {cmd:alegend}}When used, It will add a legend with all values defined in {cmd:over(varname)} to the graph. The default is not to show any legends. Can be combined with {help legend_options}
 
-{synopt : {cmd:iqr}}When specified, 3 additional lines will be added to the graph, indicating the 25th, 50th and 95th percentiles.
+{synopt : {cmd:iqr[(numlist)]}}When specified, it will add lines to the graph indicating specified percentiles (numlist). 
+If numlist is not provided, it produces the 25th, 50th and 75th percentile.
 
-{synopt : {cmd:violin}}When specified, it produces a violin type plot, rather than the kernel density plots. 
+{synopt : {cmd:iqrlwidth(numlist)}}Used to change the width of the lines marking the specified percentiles. Default is 0.3.
+
+{synopt : {cmd:iqrlcolor(color)}}Used to change the color, or color properties of lines marking the specified percentiles. It may overwrites other color options.
+
+{synopt : {cmd:violin}}When specified, it produces a violin type plot, rather than the kernel density plots. If by() is used, it produces half violin plots.
 
 {marker opt}{synopthdr:color options}
 {synoptline}
 
 {synopt : {cmd: color(colorlist)}}Can be used to specify colors for each group defined by {cmd:over(varname)}, using 
-a list of colors. If you add only fewer colors than groups in {cmd:over(varname)}, subsequent groups will use last specified color. 
+a list of colors. If you add fewer colors than groups in {cmd:over(varname)}, subsequent groups will use last specified color. 
 For example if you type color(red blue), but over(var) has 3 groups, the last group will also be assigned the "blue" color.
 
 {synopt : {cmd: colorpalette(*)}}An alternative approach to specify colors. This uses the command {help colorpalette} 
 to define colors and use them for the scatter plot. 
 
 {phang}If neither option is used, colors are assigned based on the current {help scheme}, which uses up to 15 different 
-colors.
+colors. 
+
+{phang}Note:If one uses over() option only, each group will be ploted with different colors. However, if by() option is used
+colors will be assigned based on by() not over().
 
 {marker opt}{synopthdr:Other color options}
 {synoptline}
@@ -85,13 +99,14 @@ lwidth, lpattern, lalign, lstyle. Be aware that the same option will be applied 
 {marker opt}{synopthdr:twoway options}
 {synoptline}
 
-{phang}It is also possible to use any of the {help twoway} options, including {k}labels, {k}titles, name, notes, etc. It cannot be combined with "by() option."
+{phang}It is also possible to use any of the {help twoway} options, including {k}labels, {k}titles, name, notes, etc. 
 
 
 {marker description}{...}
 {title:Description}
 
-{p}This module aims to provide an easy way to create joy_plots/ridgeplots and violin plots, over different groups.
+{p}This module aims to provide an easy way to create joy_plots and violin plots, over different groups. This are basically kernel density plots for a single variable
+across multiple groups (either over() or by())
 {p_end}
 
 {p}For example, say that one is interested in visualizing the wage distribution for men and women. What you would normally do would be
@@ -109,6 +124,9 @@ lwidth, lpattern, lalign, lstyle. Be aware that the same option will be applied 
 {p}This program should also facilitate using different colors to each sub group. For example, one can simply 
 provide the list of colors using {cmd:color(colorlist)}. You coud also use the option
 {help colorpalette}() to select colors for each group defined by {cmd:over(varname)}.{p_end}
+
+{p}This can also be used to produce multiple plots within each "over()" group, using option "by()". For example, one could plot
+wage distribution across education levels, for men and women. 
 
 {p}See examples for details
 
@@ -152,15 +170,34 @@ But what if you want to try using colors other than the default. You have three 
 {phang2}{bf:{stata `"joy_plot lnwage  , over(mstatus) iqr range(2 5) title("Wages distribution") subtitle("by Marital Status") "'}}
 {p_end}
 
+{pstd}Now say that you want to compare wage distribution of men and women, over marital status. {p_end}
+{phang2}{bf:{stata `"joy_plot lnwage  , over(mstatus) by(female) title("Wages distribution") subtitle("by Marital Status") "'}}
+
+{pstd}Or produce a violin plot from here as well:{p_end}
+{phang2}{bf:{stata `"joy_plot lnwage  , over(mstatus) by(female) title("Wages distribution") subtitle("by Marital Status and Gender") violin"'}}
+
+{pstd}Finally, you can plot over gender, by marital Status. Although violin is no longer an option {p_end}
+{phang2}{bf:{stata `"joy_plot lnwage  , by(mstatus) over(female) title("Wages distribution") subtitle("by Marital Status and Gender") "'}}
+
+
 {marker Aknowledgement}{...}
 {title:Aknowledgement}
 
 {pstd}
-This command came up to existance because I do this kind of graphs often just to visualize multiple groups at the same time. Since I was in a programming mood, I decided to write up a command for this. 
+This command came up to existance because I do this kind of graphs often just to visualize multiple groups at the same time. 
+Since I was in a programming mood, I decided to write up a command for this. 
 {p_end}
 
 {pstd}
 Also, colorpalette is a very powerful command by Ben Jann. Without it, playing with colors would be far more difficult!
+
+{pstd}
+Finally, many thanks to Eric Melse, who suggested many new features for this command.
+
+{pstd}
+One last point. If you are interested on this or other of my visualization tools, check {browse "https://github.com/friosavila/stataviz"}, where I will try to 
+keep updated versions of these commands.
+
 {p_end}
 
 {marker Author}{...}
@@ -175,5 +212,5 @@ friosavi@levy.org
 {title:Also see}
 
 {p 7 14 2}
-Help:  {helpb colorpalette}, {helpb scatter}, {helpb kdensity}
+Help:  {helpb colorpalette}, {helpb scatter}, {helpb kdensity}, {helpb ridgeline_plot}, {helpb waffle_plot}
 
