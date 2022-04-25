@@ -54,9 +54,38 @@ And as I show you before, mscatter can be combined with by()
 mscatter ln_wage ttl_exp , over(grade) ///
  colorpalette(magma ) by(race, legend(off)) // legend(off) should go here
 ```
-
-Only current limitation, you can also use weights (for size of markers) but it will fail 
-if you have groups without weights (difficult to explain and reproduce)
-
 ![sct_5](./figures/sct_5.png)
 
+Only current limitation, you can use weights (for size of markers) but it will fail 
+if you have groups without observations based on **over** and **by** (difficult to explain and reproduce)
+
+## New update!
+
+Two improvements with respect to previous version. 
+
+1. You should now be able to use it with Stata v14 (or even earlier versions?)
+2. You can now add fitted plots to the scatter!
+
+```
+webuse nlswork, clear
+set seed 10
+keep if runiform()<.2
+set scheme white
+color_style tableau
+mscatter ln_wage ttl_exp , over(race)  ///
+fit(qfitci) ///<-adds quadratic fit with CI
+mfcolor(%5) mlcolor(%5) alegend ytitle("Log Wages")
+```
+![sct_6](./figures/sct_6.png)
+
+Or take the scatterplot out!
+
+```
+set scheme white
+color_style tableau
+mscatter ln_wage ttl_exp , over(race)  ///
+fit(qfitci) mfcolor(%5) mlcolor(%5) ///
+noscatter  /// Asks not to show the scatter points
+alegend ytitle("Log Wages")
+```
+![sct_7](./figures/sct_7.png)

@@ -1,10 +1,10 @@
 {smcl}
-{* *! version 1.0  March 2022}{...}
+{* *! version 1.1  April 2022}{...}
 
 {title:Title}
 
 {phang}
-{bf:mscatter} {hline 2} Module create Scatters-plots across different groups. 
+{bf:mscatter} {hline 2} Module to create Scatters-plots across different groups. 
 {p2colreset}{...}
 
 
@@ -19,19 +19,28 @@
 
 {synopt  : {cmd: yvar xvar}} You need to specify two numeric variables (y and x) that will be used for the scatter plot.
 
-{synopt : {cmd: over(varname)}} Indicates a variable that defines the groups to be used for the scatter plot. See examples and description. If Omitted, it would be better to use {help scatter}.
+{synopt : {cmd: over(varname)}} Indicates a variable that defines groups to be used for the scatter plot. See examples and description. If Omitted, it would be better to use {help scatter}. 
 
 {marker opt}{synopthdr:legend options}
 {synoptline}
 
-{synopt : {cmd: alegend}}When Requested, a label will be added to the graph, using the levels of {cmd:over(varname)}. 
-The default is not to show any legends.
+{synopt : {cmd: alegend}}When requested, a label will be added to the graph, using the levels of {cmd:over(varname)}. 
+The default is to ommit legends.
 
-{synopt : {cmd: legend(*)}}Can be combined with alegend. It is used to add legends to the scatter plot.
+{synopt : {cmd: legend(Options)}}Can be combined with alegend. It is used to add legends to the scatter plot.
+
+{synopt : {cmd: strict}}Request to use {cmd:strict} option to determine the value labels. With "strict", if a value has no label, nothing will be used in legend. 
+The default option uses either the label (when available) or over_variable value.
+
+{synopt : {cmd: fit(fit_cmds, opts)}}Request to produce fitted values and plots them in the scatter. One can use lfit, qfit, fpfit, or lpoly (or the CI alternatives).
+It also allows you to specify weights and options depending on each "fit" command.
+
+{synopt : {cmd: noscatter}}Ommits plotting the Scatterplots. Useful if you use "fit()" options.
+
 
 {marker opt}{synopthdr:color options}
 
-{synopt : {cmd: color(9)}}Can be used to specify colors for each group defined by {cmd:over(varname)}. 
+{synopt : {cmd: color(*)}}Can be used to specify colors for each group defined by {cmd:over(varname)}. 
 It has two options. You can either specify a list of colors, or a variable that define those colors.
 
 {synopt : {cmd: colorpalette(*)}}An alternative approach to specify colors. This uses the command {help colorpalette} 
@@ -69,10 +78,14 @@ defined by {cmd:over(varname)}.
 
 {phang2} mscatter wage age, over(sex) alegend
 
-{p}This program should also facilitate using different colors to each sub group. For example, one can simply 
+{p}This command should also facilitate using different colors to each sub group. For example, one can simply 
 provide the list of colors using {cmd:color(colorlist)}. When you have many subgroups, it may be easier 
 to provide a variable with the desired colors {cmd:color(varname)}. Finally, you coud also use the option
 {help colorpalette}() to select colors for each group defined by {cmd:over(varname)}.{p_end}
+
+{p}This command should also make it easy to add "fitted" value plots to scatter plots. Some people may find that useful.
+
+{p}One last thing. If you see something weird as an ouput, its probably an easter egg! let me know if you find it{p_end}
 
 {p}See examples for details
 

@@ -1,15 +1,41 @@
-program mscatter
-	* If nothing is done, all goes to 0
-	*syntax  anything(everything), [*] 
-	if `c(stata_version)'<16 {
-		display in red "You need Stata 16 or higher to run this command"
-		error 99
+*! v1.3  4/24/2022 by FRA: Adds FIT option.
+* v1.2  4/21/2022 by FRA: Works with Stata < 16
+* v1.1  4/11/2022 by FRA
+** Scatter with across multiple groups
+
+mata:
+	void gquery(string scalar scm, anything){
+		string matrix any, sch, ssch
+		ssch=cat(scm)
+		any=stritrim(strtrim(tokens(anything)))
+		real scalar i, fnd, nr
+		nr=rows(ssch)
+		fnd=1
+		i=1
+		while(fnd==1){			
+			i++
+			sch=stritrim(tokens(ssch[i,]))
+			if (cols(sch)==3) {
+				if (sch[1]==any[1] & sch[2]==any[2]) {		
+					fnd=0
+					st_local("toreturn",sch[3])
+				}
+			}
+			if (i==nr) {
+				fnd=0
+			}
+		}
 	}
+end
+
+program graphquery, rclass
+	syntax anything, [DEFAULT DEFAULT1(str asis) ]
+	qui:findfile "scheme-`c(scheme)'.scheme"
+	mata:gquery("`r(fn)'","`anything'") 
+	if `"`toreturn'"'=="" & "`default'`default1'"!="" local toreturn `default'`default1'
+	display "`anything':" `"`toreturn'"'
 	
-	if runiform()<0.001 {
-		easter_egg
-	}
-	mscatterx `0'
+	return local query   `toreturn'
 end
 
 program byparse, rclass
@@ -25,9 +51,119 @@ display in w "{p}Granted, using color in papers is tough (most prints are black 
 display in w "{p}All right, that is it! {p_end}"
 end 
 
+program colorpalette_parser, rclass
+	syntax [anything(everything)], [nograph * n(string asis) opacity(passthru)]
+	return local clp   = `"`anything', `options'"'
+	return local clpop = `"`anything', `options' `opacity'"'
+end
+
+program mscatter
+	* If nothing is done, all goes to 0
+	*syntax anything(everything), [  * ] 
+	if runiform()<0.001 {
+		easter_egg
+	}
+	
+	if runiform()<0.001 {
+		if `c(stata_version)'>=16 {
+			easter_egg2
+		}		
+	}
+	mscatterx `0'
+end
+
+program easter_egg2 
+	tempname mario
+	frame create `mario'
+	frame `mario':use https://friosavila.github.io/playingwithstata/rnd_dta/mario, clear
+	frame `mario':mscatterx y x, over(cc10)  color(mc10) msize(1.3) msymbol(S) aspect(1)  title("Let me take care of it")  
+	if _rc==0 sleep 2000
+	
+end
+
 program mscatterx 
+ 	syntax varlist(max=2)   [if] [in] [aw/], [over(varname)] ///
+				[ alegend legend(string asis) color(string asis) ///
+				  fit(str asis)	 ///
+				  colorpalette(string asis) by(string asis)  * ]
+	** First Parse
+	tempvar touse
+	qui:gen byte `touse'=0
+	qui:replace `touse'=1 `if' `in'
+	** over?
+	if "`over'"=="" {
+		tempvar over
+		qui:gen byte `over'=1
+	}
+	tempname new
+	** Check color 
+	capture confirm var `color'
+	if _rc==0 	local myvlist `color'
+	** check by
+	byparse `by'
+	***	
+	local byvlist `r(byvlist)'
+	local byopts  `r(byopt)'
+	*display "`myvlist' `varlist' `byvlist' `over' `exp'"
+
+	** Check weights in fit
+	fit_parser `fit'
+	local fitwgt `r(fitwgt)'
+	
+	** markout only works with numeric	
+	markout `touse' `varlist' `byvlist' `over' `exp', strok
+	
+	local myvlist `myvlist' `varlist' `byvlist' `over' `exp' `fitwgt'
+	
+	** Put into Frame
+	if `c(stata_version)'>=16 {
+		frame put `myvlist' if `touse', into(`new')
+		frame `new':mscatter_do `0'
+	}
+	else {
+		preserve
+			qui:keep if `touse'
+			keep `myvlist' 
+			mscatter_do `0'
+		restore
+	}
+	
+	
+end 
+
+ 
+program fit_parser, rclass
+	syntax [anything] [aw fw pw iw ], [* fcolor(passthru) lcolor(passthru)]
+	if "`anything'"=="" exit
+	
+	if inlist("`anything'","lfitci","qfitci","fpfitci","lpolyci") {
+		return local fitval =2
+	}
+	else if inlist("`anything'","lfit","qfit","fpfit","lpoly") {
+		return local fitval =1
+	}
+	else {
+		display in red "Not a valid {cmd:fit} option. One can only use lfit qfit fpfit or lpoly (with CI options)"
+		error 99
+	}
+	
+	if `"`fcolor'"'=="" local fcolor fcolor(%50)
+	if `"`lcolor'"'=="" local lcolor lcolor(*1.1)
+ 
+	local wgt=subinstr("`exp'","=","",1)
+	return local  fitcmd  `anything'
+	return local  fitopt  `options' `fcolor' `lcolor'
+	return local  fitwgt  `wgt'
+	return local  fitewgt [`weight'`exp']
+
+end
+
+ 
+**!! Consider adding a sample option. 
+
+program mscatter_do 
  	syntax varlist(max=2)   [if] [in] [aw/], [over(varname)] [ alegend legend(string asis) color(string asis) colorpalette(string asis) by(string) ///
-										msymbol(passthru) msize(passthru) ///
+										msymbol(passthru) msize(passthru) fit(str asis) noscatter ///
 										msangle(passthru) mfcolor(passthru) mlcolor(passthru) strict ///
 										mlwidth(passthru) mlalign(passthru) jitter(passthru) jitterseed(passthru) * ]
 	** First Parse
@@ -44,7 +180,6 @@ program mscatterx
 	capture confirm var `color'
 	if _rc==0 	local myvlist `color'
 	** check by
-	
 	byparse `by'
 	***	
 	local byvlist `r(byvlist)'
@@ -52,26 +187,34 @@ program mscatterx
 	*display "`myvlist' `varlist' `byvlist' `over' `exp'"
 
 	** markout only works with numeric	
-	capture confirm numeric var `over'
-	if _rc!=0 {
-		tempvar nover
-		encode `over', gen(`nover')
-		local over `nover'
-	}
-	
-	markout `touse' `varlist' `byvlist' `over' `exp'
+ 
 	
 	local myvlist `myvlist' `varlist' `byvlist' `over' `exp'
 	
 	** Put into Frame
-	frame put `myvlist' if `touse', into(`new')
-	
-	frame `new':	{
+ 	qui {
+		** check fit options
+		fit_parser `fit'
+		local fitcmd `r(fitcmd)'
+		local fitopt `r(fitopt)'
+		local fitval `r(fitval)'
+		local fitwgt `r(fitewgt)'
 		**Check Weight 
+		capture confirm numeric var `over'
+			if _rc!=0 {
+				tempvar nover
+				encode `over', gen(`nover')
+				local over `nover'
+			}
+	
 		if "`exp'"!="" local wexp [aw=`exp']
 		
+		if "`scatter'"!="" {
+			tempvar fuse
+			qui: gen byte `fuse'=.
+			local tofuse & `fuse'!=.
+		}	
 		** Check over to be numeric.
-
 		** sort so 1 per over
 		
  		tempvar flag
@@ -79,76 +222,64 @@ program mscatterx
 		 
 		sort __flag `over'
 		qui:levelsof `over' , local(lvlby)
-		*** here WE DO COLORS
+		
+		** Which color options:
 		if `"`color'"'!="" {
-			** two options. variable or color list
-			** If color variable. then use first obs
 			capture confirm var `color'
-			** Color by Variable
-			if _rc==0 {
-				local cnt = 0
-				foreach i of local lvlby {
-					local cnt = `cnt' +1 	
-					
-					local pscatter `pscatter' ///
-					(scatter `varlist' if `over'==`i', ///
-					color( "`=`color'[`cnt']'" ) ///
-					`msymbol' `msize' `msangle' `mfcolor' `mlcolor' ///
-					`mlwidth' `mlalign' `jitter' `jitterseed')
-				}
-			}
-			** or by color list
-			else {
-				local cnt = 0
-				foreach i of local lvlby {
-					local cnt = `cnt' +1 		
-					local col:word `cnt' of `color'
-					local pscatter `pscatter' ///
-					(scatter `varlist' if `over'==`i', ///
-					color( `"`col'"' ) ///
-					`msymbol' `msize' `msangle' `mfcolor' `mlcolor' ///
-					`mlwidth' `mlalign' `jitter' `jitterseed')
-				}
-			}
-		}		
+			if _rc==0 local col_op = 1   // <--- provides colors by variable
+			else      local col_op = 2   // <--- provides colors by color list
+		}
 		else {
-			** If there is no color list, two options
-			** 1 Use color palette option: Auto extrapolate and assign
-			** 2 use default styles colors
-			if "`colorpalette'"!="" {
-				local cnt: word count `lvlby'
-				if strpos(  `"`colorpalette'"' , ",") == 0 local colorpalette  `"`colorpalette', nograph n(`cnt')"'
-				else local colorpalette  `"`colorpalette' nograph n(`cnt')"' 
-				local cn = 0
-				colorpalette `colorpalette'
-				foreach i of local lvlby {
-					local cn = `cn'+1
-					local ll:word `cn' of `r(p)'
-					local pscatter `pscatter' (scatter `varlist' if `over'==`i' `wexp', color("`ll'") ///
-												`msymbol' `msize' `msangle' `mfcolor' `mlcolor' ///
-												`mlwidth' `mlalign' `jitter' `jitterseed' )
-				}
+			if "`colorpalette'"!="" local col_op = 3   // <-- Uses Color palette
+			else                    local col_op = 4   // <-- Uses default "system" colors
+		}
+		
+		if `col_op'==3 {
+			local cnt: word count `lvlby'
+			colorpalette_parser `colorpalette'
+			colorpalette `r(clpop)' nograph n(`cnt')
+			local cpcolor  `"`r(p)'"'
+		}
+		
+		local cnt=0
+		local cnx=0
+		foreach i of local lvlby {
+			local cnt = `cnt' +1 	
+			local cnx = `cnx'+1
+			if `col_op'==1 {
+				local mycolor `=`color'[`cnt']'
 			}
-			else {
-				local cn = 0
-				*colorpalette `colorpalette'
-				foreach i of local lvlby {
-					local cn = `cn'+1
-					local pscatter `pscatter' (scatter `varlist' if `over'==`i' `wexp', /*pstyle(p`cn')*/ ///
-												`msymbol' `msize' `msangle' `mfcolor' `mlcolor' ///
-												`mlwidth' `mlalign' `jitter' `jitterseed' )
-				}
+			if `col_op'==2 {
+				local wrd:word count `color'
+				if `cnt'<=`wrd'	local mycolor:word `cnt' of `color'
+				else  		    local mycolor:word `wrd' of `color'
 			}
-		  }
+			if `col_op'==3 local mycolor:word `cnt' of `cpcolor'
+			if `col_op'==4 {
+				if `cnx'>15	 local cnx 1
+				qui:graphquery color p`cnx'
+				local mycolor `r(query)'
+			}
+			if "`fit'"!="" local fitplot (`fitcmd' `varlist' if `over'==`i' `fitwgt', `fitopt' color("`mycolor'") )
+			local pscatter `pscatter' ///
+					(scatter `varlist' if `over'==`i'  `tofuse', ///
+					color( "`mycolor'" ) ///
+					`msymbol' `msize' `msangle' `mfcolor' `mlcolor' ///
+					`mlwidth' `mlalign' `jitter' `jitterseed') `fitplot'
+		}
+			
+			
 		 ** Then just Scatter, but...One more component, legend. Default Legend off
 		 if "`alegend'"=="" & `"`legend'"' == ""   local mylegend legend(off)
 		 if "`alegend'"=="" & `"`legend'"' != ""   local mylegend legend(`legend')
 		 if "`alegend'"!="" {
-		 	local cn 
+		 	local cn =0
+			
 		 	foreach i of local lvlby {
-					local cn = `cn'+1
+					local cn = `cn'+1+0`fitval'
 					local slg: label (`over') `i', `strict'
 					local mylegend `mylegend' `cn' "`slg'"
+					
 				}
 			local mylegend legend(order(`mylegend') `legend')	
 		 }
@@ -157,3 +288,4 @@ program mscatterx
 		two `pscatter', `options' by(`by') `mylegend'
 	}
 end 
+
