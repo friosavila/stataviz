@@ -1,4 +1,6 @@
-*! v1.3  4/24/2022 by FRA: Adds FIT option.
+*! v1.32  4/26/2022 by FRA: Fixes IF
+* v1.31  4/26/2022 by FRA: Transparency fix
+* v1.3  4/24/2022 by FRA: Adds FIT option.
 * v1.2  4/21/2022 by FRA: Works with Stata < 16
 * v1.1  4/11/2022 by FRA
 ** Scatter with across multiple groups
@@ -118,13 +120,15 @@ program mscatterx
 	** Put into Frame
 	if `c(stata_version)'>=16 {
 		frame put `myvlist' if `touse', into(`new')
-		frame `new':mscatter_do `0'
+		syntax anything [aw] [if] [in], [*]
+		frame `new':mscatter_do `anything' [`weight'`exp'], `options'
 	}
 	else {
 		preserve
 			qui:keep if `touse'
 			keep `myvlist' 
-			mscatter_do `0'
+			syntax anything [aw] [if] [in], [*]
+			mscatter_do `anything' [`weight'`exp'], `options'
 		restore
 	}
 	
@@ -147,7 +151,9 @@ program fit_parser, rclass
 		error 99
 	}
 	
-	if `"`fcolor'"'=="" local fcolor fcolor(%50)
+	if `"`fcolor'"'=="" & `c(stata_version)'<=14 local fcolor fcolor(*.50)
+	if `"`fcolor'"'=="" & `c(stata_version)'>14  local fcolor fcolor(%50)
+	
 	if `"`lcolor'"'=="" local lcolor lcolor(*1.1)
  
 	local wgt=subinstr("`exp'","=","",1)
@@ -162,7 +168,7 @@ end
 **!! Consider adding a sample option. 
 
 program mscatter_do 
- 	syntax varlist(max=2)   [if] [in] [aw/], [over(varname)] [ alegend legend(string asis) color(string asis) colorpalette(string asis) by(string) ///
+ 	syntax varlist(max=2)   [if] [in] [aw/], [over(varname)] [ alegend legend(string asis) color(string asis) colorpalette(string asis) by(str asis) ///
 										msymbol(passthru) msize(passthru) fit(str asis) noscatter ///
 										msangle(passthru) mfcolor(passthru) mlcolor(passthru) strict ///
 										mlwidth(passthru) mlalign(passthru) jitter(passthru) jitterseed(passthru) * ]

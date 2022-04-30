@@ -1,4 +1,6 @@
-*! v1.5 over and by
+*! v1.52 Corrects if 
+* v1.51 Refinements for Default Options
+* v1.5 over and by
 * v1.4 works with Stata 10 or above?
 * v1.3 Fixes gap0
 * v1.2 Fixes rangeasis. No longer needed
@@ -45,10 +47,16 @@ program _rangevar, sortpreserve rclass
 end
 
 program _over, rclass
-	syntax [anything], gen(string)
+	syntax [anything], gen(string) var(varname)
 	
 	if "`anything'"=="" {
-		qui:gen byte `gen'=1
+		qui:gen byte `gen'=1		
+		local tolab:variable label `var'
+		if `"`tolab'"'=="" local tolab `var'
+		qui:label var `gen' `"`tolab'"'
+		label define `gen' 1 `"`tolab'"'
+		label values `gen' `gen'
+		*display in w "`tolab'" 
 	}
 	else {
 		capture confirm numeric var `anything'
@@ -78,6 +86,8 @@ end
 	}
 end */
 
+ 
+
 program joy_plot
 
 	syntax varname [if] [in] [aw/], [over(varname) by(varname) *]     //  overall look of outline
@@ -87,22 +97,26 @@ program joy_plot
 										msymbol(passthru) msize(passthru) ///
 										msangle(passthru) mfcolor(passthru) mlcolor(passthru) ///
 										mlwidth(passthru) mlalign(passthru) jitter(passthru) jitterseed(passthru) *]*/
-										
 	marksample touse
-	markout `touse' `varlist' `over' `by' `exp', strok
+	** detect if
+ 
+	
+	markout `touse' `varlist' `over' `by' `exp' , strok
 	tempname frame
 	
 	if `c(stata_version)'>=16 {
 		frame put `varlist' `over' `by' `exp'  if `touse', into(`frame') 
-		if "`by'"==""		qui:frame `frame': make_joy `0'
-		if "`by'"!=""		qui:frame `frame': make_joy2 `0'		
+		syntax anything [aw] [if] [in], [*]
+		if "`by'"==""		qui:frame `frame': make_joy `anything' [`weight'`exp'], `options'
+		if "`by'"!=""		qui:frame `frame': make_joy2 `anything' [`weight'`exp'], `options'
 	}
 	if `c(stata_version)'<16 {
 		preserve
 			qui:keep `varlist' `over'  `by' `exp'  `touse'
 			qui:keep if `touse'
-			if "`by'"==""		: make_joy `0'
-			if "`by'"!=""		: make_joy2 `0'
+			syntax anything [aw] [if] [in], [*]
+			if "`by'"==""		: make_joy `anything' [`weight'`exp'], `options'
+			if "`by'"!=""		: make_joy2 `anything' [`weight'`exp'], `options'
 		restore
 	}
 	
@@ -140,30 +154,42 @@ program mycolors, rclass
 	return local mycolor `mycolor'
 end
 
+program text_default, rclass
+	syntax , [* size(str asis) placement(str asis) right]
+	if `"`size'"'=="" local size small
+	if `"`place'"'=="" {
+		local placement e
+		if "`right'"!="" local placement w
+	}
+	return local textopt `options' size(`size') placement(`placement')
+end
+
 program make_joy
 	syntax varname [if] [in] [aw/], [over(varname) by(varname) ///
 	radj(real 0)   /// Range Adjustment. How much to add or substract to the top bottom.
 	range(numlist min=2 max=2) ///
 	offset(real 0) /// to move text
+	yoffset(real 0) /// Move text up down
 	dadj(real 1)   /// Adjustment to density. Baseline. 1/grps
 	bwadj(numlist >=0 <=1)  /// Adj on BW 0 uses average, 1 uses individual bw's
 	bwadj2(real 1)  /// Adj on BW 0 uses average, 1 uses individual bw's
-	bwadj3(real 0)  /// Adj on BW on all
+	BWadj3(real 0)  /// Adj on BW on all
 	kernel(string)  ///
-	nobs(int 200)   ///
+	Nobs(int 200)   ///
 	color(string asis)   /// only colorlist
-	iqrlwidth(real 0.3)  ///
-	iqrlcolor(str asis)  ///
-	colorpalette(string asis) /// Uses Benjann's Colors with all the options. 
+	IQRLWidth(real 0.3)  ///
+	IQRLColor(str asis)  ///
+	COLORPalette(string asis) /// Uses Benjann's Colors with all the options. 
 	strict notext textopt(string) ///
 	 gap0 alegend IQR IQR1(numlist >0 <100) ///
-    fcolor(passthru)        ///  fill color and opacity
-    fintensity(passthru) 	///  fill intensity
-    lcolor(passthru)        ///  outline color and opacity
-    lwidth(passthru)     	///  thickness of outline
-    lpattern(passthru) 		///  outline pattern (solid, dashed, etc.)
-    lalign(passthru) 		///   outline alignment (inside, outside, center)
-    lstyle(passthru) 		///
+    FColor(passthru)        ///  fill color and opacity
+    FIntensity(passthru) 	///  fill intensity
+    LColor(passthru)        ///  outline color and opacity
+    LCidth(passthru)     	///  thickness of outline
+    LPattern(passthru) 		///  outline pattern (solid, dashed, etc.)
+    LAlign(passthru) 		///   outline alignment (inside, outside, center)
+    LSTYle(passthru) 		///
+	XLABel(passthru)        /// 
     violin right addplot(string asis) *]     //  overall look of outline
    
    	if "`kernel'"=="" 	local kernel gaussian
@@ -172,10 +198,10 @@ program make_joy
 		
 ** make variable numeric with labels
 		tempvar nb
- 		_over `over', gen(`nb')
+ 		_over `over', gen(`nb') var(`varlist')
 		local over `nb'
 		
-		** Create Rage var
+		** Create Range var
 		tempname rvar
  		_rangevar `varlist', radj(`radj') nobs(`nobs') rvar(`rvar') offset(`offset') range(`range')  
 		local vmin = r(vmin)
@@ -307,27 +333,30 @@ program make_joy
 		*******************************************************************************************
 		** Text to identify What something is.
 		** 1 Not valid if violin or gap0
+		
 		if "`text'"=="" & "`violin'"=="" & "`gap0'"=="" {
 			local cn = 0
 			foreach i of local lvl {
 				local cn     = `cn'+1
 				local lbl: label (`over') `i', `strict'
-				if "`right'"=="" local totext `totext' `=`f0`cn''+0.5/`cnt'' `vmin2'  `"`lbl'"'
-				else             local totext `totext' `=`f0`cn''+0.5/`cnt'' `vmax2'  `"`lbl'"'
+				if "`right'"=="" local totext `totext' `=`f0`cn''+(0.5+`yoffset')/`cnt'' `vmin2'  `"`lbl'"'
+				else             local totext `totext' `=`f0`cn''+(0.5+`yoffset')/`cnt'' `vmax2'  `"`lbl'"'
 			}
 		}	
-		else if "`violin'"!="" /*& "`gap0'"=="" & "`text'"==""*/ {
+		else if "`violin'"!=""  /*& "`gap0'"=="" & */ {
 			local cn = 0
 			local vtotext
-			foreach i of local lvl {
-				local cn     = `cn'+1
-				local lbl: label (`over') `i', `strict'
-				*local vl : word  `cn' `fvio'
-				local vl = 1/`cnt'*(`cnt'-`cn')*`vm'
-				local vtotext `vtotext'  `vl' "`lbl'"
+			if  "`text'"=="" {
+				foreach i of local lvl {
+					local cn     = `cn'+1
+					local lbl: label (`over') `i', `strict'
+					*local vl : word  `cn' `fvio'
+					local vl = 1/`cnt'*(`cnt'-`cn')*`vm'
+					local vtotext `vtotext'  `vl' "`lbl'"
+				}
 			}
-			local xlabvio xlabel(`vtotext')
 			local horizontal horizontal
+			
 		}
 		local cnt =`cn'
 		** Auto Legend
@@ -381,11 +410,15 @@ program make_joy
 		else local leg
  		if "`gap0'"!="" | "`violin'"!="" 	local ylabx 
 		else local ylabx ylabel("")
+		*** text defai;t
+		text_default , `textopt' `right'
+		local textopt `r(textopt)'
+		xlabel_default, vio(`vtotext') `xlabel' `text'
+		local mxlabel `r(xlabel)'
 		
 		two `joy' (`addplot'), ///
 			text(`totext' , `textopt') ///
-			`options' `leg' `ylabx' `xlabvio'
-
+			`options' `leg' `ylabx'  `mxlabel'
 end
 
 ** This maes the program not 15 friendly
@@ -430,27 +463,29 @@ program make_joy2
 	radj(real 0)   /// Range Adjustment. How much to add or substract to the top bottom.
 	range(numlist min=2 max=2) ///
 	offset(real 0) /// to move text
+	yoffset(real 0) /// Move text up down
 	dadj(real 1)   /// Adjustment to density. Baseline. 1/grps
 	bwadj(numlist >=0 <=1)  /// Adj on BW 0 uses average, 1 uses individual bw's
 	bwadj2(real 1)  /// Adj on BW 0 uses average, 1 uses individual bw's
-	bwadj3(real 0)  /// Adj on BW on all
+	BWadj3(real 0)  /// Adj on BW on all
 	kernel(string)  ///
-	nobs(int 200)   ///
+	Nobs(int 200)   ///
 	color(string asis)   /// only colorlist
-	iqrlwidth(real 0.3)  ///
-	iqrlcolor(str asis)  ///
-	colorpalette(string asis) /// Uses Benjann's Colors with all the options. 
+	IQRLWidth(real 0.3)  ///
+	IQRLColor(str asis)  ///
+	COLORPalette(string asis) /// Uses Benjann's Colors with all the options. 
 	strict notext textopt(string) ///
 	 gap0 alegend IQR IQR1(numlist >0 <100) ///
-    fcolor(passthru)        ///  fill color and opacity
-    fintensity(passthru) 	///  fill intensity
-    lcolor(passthru)        ///  outline color and opacity
-    lwidth(passthru)     	///  thickness of outline
-    lpattern(passthru) 		///  outline pattern (solid, dashed, etc.)
-    lalign(passthru) 		///   outline alignment (inside, outside, center)
-    lstyle(passthru) 		///
+    FColor(passthru)        ///  fill color and opacity
+    FIntensity(passthru) 	///  fill intensity
+    LColor(passthru)        ///  outline color and opacity
+    LCidth(passthru)     	///  thickness of outline
+    LPattern(passthru) 		///  outline pattern (solid, dashed, etc.)
+    LAlign(passthru) 		///   outline alignment (inside, outside, center)
+    LSTYle(passthru) 		///
+	XLABel(passthru)        /// 
     violin right addplot(string asis) *]     //  overall look of outline
-   
+	   
    	if "`kernel'"=="" 	local kernel gaussian
 		
 	if "`bwadj'"==""  local bwadj=0
@@ -466,11 +501,11 @@ program make_joy2
 	}
 	** modify? instead of new variable?
 	tempvar nb
-	_over `over', gen(`nb')
+	_over `over', gen(`nb') var(`varlist')
 	local over `nb'
 	
 	tempvar nb2
-	_over `by', gen(`nb2')
+	_over `by', gen(`nb2') var(`varlist')
 	local by `nb2'
 	
 		** Create Rage var
@@ -525,15 +560,20 @@ program make_joy2
 		}
 		else {
 			local ii     = 0
+			local cn = 0
 			foreach i of local lvl {
 				local ii=`ii'+1
 				local jj     = 0			
 				foreach j of local lvl2 {
+					local cn = `cn'+1
 					local jj=`jj'+1
 					local bw`ii'`jj' =`bwadj3'
 				}
 			}
 		}
+		
+		local cnt = `cn'/2
+		local cntt = `cn'
 		** s5: get initial Densities
 		*****************************************************************************************************************
 		local ii     = 0
@@ -569,8 +609,7 @@ program make_joy2
 		** s5: Rescale Densities
 		** Then Rescale densities. Either for stacked or violin
 		** Here is where things NEED to be taken care of
-		local cnt = `cn'/2
-		local cntt = `cn'
+
 		local cn = 0
 		local ii     = 0
 		foreach i of local lvl {
@@ -663,21 +702,23 @@ program make_joy2
 			foreach i of local lvl {
 				local ii=`ii'+1
 				local lbl: label (`over') `i', `strict'
-				if "`right'"=="" local totext `totext' `=`f0`ii'1'+0.5/`cnt'' `vmin2'  `"`lbl'"'
-				else             local totext `totext' `=`f0`ii'1'+0.5/`cnt'' `vmax2'  `"`lbl'"'
+				if "`right'"=="" local totext `totext' `=`f0`ii'1'+(0.5+`yoffset')/`cnt'' `vmin2'  `"`lbl'"'
+				else             local totext `totext' `=`f0`ii'1'+(0.5+`yoffset')/`cnt'' `vmax2'  `"`lbl'"'
 			}
 		}	
 		else if "`violin'"!="" /*& "`gap0'"=="" & "`text'"==""*/ {
 			local cn = 0
 			local vtotext
-			foreach i of local lvl {
-				local cn     = `cn'+1
-				local lbl: label (`over') `i', `strict'
-				*local vl : word  `cn' `fvio'
-				local vl = 1/`cnt'*(`cnt'-`cn')*`vm'
-				local vtotext `vtotext'  `vl' "`lbl'"
+			if  "`text'"=="" {
+				foreach i of local lvl {
+					local cn     = `cn'+1
+					local lbl: label (`over') `i', `strict'
+					*local vl : word  `cn' `fvio'
+					local vl = 1/`cnt'*(`cnt'-`cn')*`vm'
+					local vtotext `vtotext'  `vl' "`lbl'"
+				}
 			}
-			local xlabvio xlabel(`vtotext')
+ 
 			local horizontal horizontal
 		}
 		*local cnt =`cn'
@@ -733,9 +774,26 @@ program make_joy2
 		else local leg
  		if "`gap0'"!="" | "`violin'"!="" 	local ylabx 
 		else local ylabx ylabel("")
+		*** text default
+		text_default , `textopt' `right'
+		local textopt `r(textopt)'
+
+		xlabel_default, vio(`vtotext') `options' `text'
+		local mxlabel `r(xlabel)'
 		
 		two `joy' (`addplot'), ///
 			text(`totext' , `textopt') ///
-			`options' `leg' `ylabx' `xlabvio'
+			`options' `leg' `ylabx' `mxlabel' 
 
+end
+
+program xlabel_default, rclass
+	syntax , [vio(string asis) xlabel(str asis) * notext]
+	if `"`xlabel'"'=="" {
+		if `"`vio'"'=="" return local xlabel xlabel(, nogrid)
+		else             return local xlabel xlabel(`vio', nogrid)
+	}
+	
+	else return local xlabel xlabel(`xlabel')
+	
 end
