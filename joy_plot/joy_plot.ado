@@ -322,7 +322,9 @@ program make_joy
 				local fvio `fvio' `f0'
 				qui: replace `f0`cn''=`f0'-0.5*(`f`cn''-`f0')
 				qui: replace `f`cn'' =`f0'+0.5*(`f`cn''-`f0')				
+				sum `f0`cn'' `f`cn''
 			}
+			
 		}
 		****************************
 		** IQR
@@ -335,8 +337,8 @@ program make_joy
 				kdensity `varlist' if `over'==`i'   `wgtx' , gen(`pt`cn'') ///
 															  kernel(`kernel') at(`prng`cn'') bw(`bw`cn'') nograph
 				qui:replace `pt`cn''=0 if `pt`cn''==.
-				replace `pt`cn''=(`pt`cn''/`fmax')*`dadj'/`cnt'+1/`cnt'*(`cnt'-`cn')*`gp'*`vm'	in 1/10
-				gen `p0`cn''=1/`cnt'*(`cnt'-`cn')*`gp'*`vm'	in 1/10
+				replace `pt`cn''=(`pt`cn''/`fmax')*`dadj'/`cnt'+1/`cnt'*(`cnt'-`cn')*`gp'*`vm'	 
+				gen `p0`cn''=1/`cnt'*(`cnt'-`cn')*`gp'*`vm'	 
 				
 			}
 			** If violin	
@@ -346,7 +348,7 @@ program make_joy
 				foreach i of local lvl {
 					local cn     = `cn'+1
 					local f0 = `p0`cn''[1]
-					qui: replace `p0`cn'' =`f0'-0.5*(`pt`cn''-`f0')
+					qui: replace `p0`cn'' =`f0'-0.5*(`pt`cn''-`f0') 
 					qui: replace `pt`cn'' =`f0'+0.5*(`pt`cn''-`f0')				
 				}
 			}			
@@ -445,7 +447,7 @@ program make_joy
 		
 		two `joy' (`addplot'), ///
 			text(`totext' , `textopt') ///
-			`options' `leg' `ylabx'  `mxlabel'
+			`options' `leg' `ylabx'  `mxlabel' 
 end
 
 ** This maes the program not 15 friendly
