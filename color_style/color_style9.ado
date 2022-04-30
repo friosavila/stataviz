@@ -1,23 +1,11 @@
-*! v1.2 Works with Stata 9.2 or higher
-* v1.12 Showcase fix and adds recycle
-* v1.1 Color_style FRA findfix
-* v1 Color_style FRA 
+
+*! v1.2 Works with Stata 12
+*! v1.12 Showcase fix and adds recycle
+*! v1.1 Color_style FRA findfix
+*! v1 Color_style FRA 
 ** Simply puts colors from Palette to style
 
-program color_style
-	syntax [anything], [graph * opacity(passthru) LIST LIST1(str) showcase]
-	
-	if `c(stata_version)'>=14.2 {
-	
-		color_style14 `0'
-		}
-	if `c(stata_version)'<14.2  {
-	
-		color_style9 `0'
-	}
-end
-
-program color_style14
+program color_style9
 	syntax [anything], [graph * opacity(passthru) LIST LIST1(str) showcase]
 	** First install extra palettes
 	if "`showcase'"!="" {
@@ -54,12 +42,12 @@ end
 
 program color_showcase
 	syntax anything
-	capture findfile color_brewer.ado
+	capture findfile color_brewer9.ado
 	capture do "`r(fn)'"
 	
-	colorpalette, span: `anything', n(1)  / `anything', n(2)  / `anything' , n(3) / `anything', n(4)  / `anything', n(5)  / ///
-						`anything', n(6)  / `anything', n(7)  / `anything', n(8)  / `anything', n(9)  / `anything', n(10) / ///
-						`anything', n(11) / `anything', n(12) / `anything', n(13) / `anything', n(14) / `anything', n(15)
+	colorpalette9, span: `anything', ipolate(1)  / `anything', ipolate(2)  / `anything' , ipolate(3) / `anything', ipolate(4)  / `anything', ipolate(5)  / ///
+						`anything', ipolate(6)  / `anything', ipolate(7)  / `anything', ipolate(8)  / `anything', ipolate(9)  / `anything', ipolate(10) / ///
+						`anything', ipolate(11) / `anything', ipolate(12) / `anything', ipolate(13) / `anything', ipolate(14) / `anything', ipolate(15)
 
 end
 
@@ -84,29 +72,29 @@ program list_palettes
 			}
 		}
 	}
-	capture findfile color_brewer.ado
+	capture findfile color_brewer9.ado
 	capture do "`r(fn)'"
 	/*Paired*/
 end
 
 program color_stylex
 	syntax anything, [graph * opacity(passthru)  ]
-	capture findfile color_brewer.ado
+	capture findfile color_brewer9.ado
 	capture do "`r(fn)'"
 	if "`graph'"=="" {
 		if strpos( "`0'" , ",") == 0 local to0 `0', nograph 
 		else local to0 `0' nograph 
 		
 		grstyle init
-		colorpalette `to0'
+		colorpalette9 `to0'
 	}
 	else {
 		syntax anything, graph *
 		*if strpos( "`0'" , ",") == 0 local to0 `0', 
 		*else local to0 `0' // 		
 		grstyle init
-		colorpalette: `anything', `options'
-		colorpalette `anything', `options' nograph
+		colorpalette9: `anything', `options'
+		colorpalette9 `anything', `options' nograph
 	}
 	
 	

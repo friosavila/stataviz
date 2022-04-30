@@ -13,7 +13,7 @@
 {p 8 16 2}
 {cmd:color_style} [palette], [graph list] [n(#) {help colorpalette} options]
 
-{synoptset 10 tabbed}{...}
+{synoptset 12 tabbed}{...}
 {marker opt}{synopthdr:options}
 {synoptline}
 
@@ -25,7 +25,12 @@ See {cmd: list}.
 
 {synopt : {cmd: list}} Provides a list of Palettes that accompany this file. These are in addition to the ones in {help colorpalette}. 
 
-{synopt :{cmd: n(#)}} Defines the number of colors to be used for the palette. n(#) should be between 1 to 15. If you select a number larger than 15, those colors will not be used in the scheme file. If n(#)<15, unused pstyle's will be set to black.
+{synopt : {cmd: list(letter)}} Provides a list of Palettes that start with "letter".
+
+
+{synopt :{cmd: n(#)}} Defines the number of colors to be used for the palette. n(#) should be between 1 to 15. If you select a number larger than 15, those colors will not be used in the scheme file. If n(#)<15, unused pstyle's will be recycled. 
+
+{synopt :{cmd: ipolate(#)}} Same as with n(#). However, using n(#) does not work under Stata versions earlier than 14.2.
 
 {synopt : } The default is to use the number of colors in the palette. For exaple {cmd: Greek} has 5 default colors. Using and n(#) higher or lower than this will interpolate colors. See the options in {help colorpalette}.
 
@@ -34,9 +39,16 @@ See {cmd: list}.
 Extra:
 
 {p 8 16 2}
-{cmd:font_style} "font"
+{cmd:font_style} {it: font}
 
 This has 1 job. Change the fontface for your graphs.  
+
+{p 8 16 2}
+{cmd:graphquery} {it: options}
+
+This has 1 job. Returns the scheme properties associated to a particular option.
+
+For example "graphquery color p1" should provide the color assigned to color p1 (navy for s2color).
 
 {marker description}{...}
 {title:Description}

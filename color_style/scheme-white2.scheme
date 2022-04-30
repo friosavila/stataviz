@@ -4,7 +4,7 @@
 *
 *
 sequence 1210
-label "white"   
+label "white2"   // auto generated
 #include s2color
 // positions and sizes
 numstyle pcycle             15
@@ -85,8 +85,8 @@ linewidth tick              thin
 linewidth minortick         thin
 linewidth background        thin
 linewidth foreground        thin
-linewidth major_grid        thin
-linewidth minor_grid        thin
+linewidth major_grid        vthin
+linewidth minor_grid        vthin
 linewidth refmarker         vthin
 linewidth matrixmark        vthin
 linewidth dots              thin
@@ -212,9 +212,9 @@ linepattern p15line    solid
 linepattern xyline       shortdash
 linepattern ci           dash
 linepattern ci_area      solid
-linepattern grid         dot
-linepattern major_grid   dot
-linepattern minor_grid   dot
+linepattern grid         solid
+linepattern major_grid   solid
+linepattern minor_grid   solid
 yesno extend_axes_low       no
 yesno extend_axes_high      no
 yesno extend_axes_full_low  no
@@ -272,9 +272,9 @@ color histogram_line  black
 color xyline     gs8
 color tick            gs8
 color minortick       gs8
-color grid                  gs8
-color major_grid            gs8
-color minor_grid            gs8
+color grid                  gs14
+color major_grid            gs14
+color minor_grid            gs14
 color axisline        gs8
 color matrix           gs6
 color matrixmarkline   gs6

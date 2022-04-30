@@ -1,4 +1,4 @@
-
+*! v1.1 Adds new pallets
 #delimit;
 
 program colorpalette_anemone ; c_local P #009474, #11c2b5, #72e1e1, #f1f4ee, #efddcf, #dcbe9b, #b0986c ; end ; 
@@ -183,6 +183,8 @@ program colorpalette_redox ; c_local P #bb281e, #d56936, #87d7eb, #42b8d7, #1687
 program colorpalette_redox2 ; c_local P #2e5894, #ffe733, #ffb200, #ec5800, #96001b ; end ; 
 program colorpalette_rendoll ; c_local P #363636, #78351d, #b27529, #ffd300, #dcdcda ; end ; 
 program colorpalette_vitrixerand ; c_local P #281b27, #723f27, #9b6044, #b5804c, #facd9a ; end ; 
+program colorpalette_ie1 ; c_local P #00356B, #8CA1BC, #CE8769, #D3CFC3 ; end ; 
+program colorpalette_ie2 ; c_local P #8CA1BC, #CE8769, #7CC0AC, #CA7294, #E7CA55, #9ECF6E ; end ; 
 
 #delimit cr
 /*program colorpalette_Paired ;c_local P #C70E7B, #FC6882,#007BC3,#54BCD1,#EF7C12,#F4B95A,#009F3F,#8FDA04,#AF6125,#F4E3C7,#B25D91,#EFC7E6, #EF7C12,#F4B95A;end;*/
