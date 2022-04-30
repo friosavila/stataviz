@@ -90,7 +90,7 @@ end */
 
 program joy_plot
 
-	syntax varname [if] [in] [aw/], [over(varname) by(varname) *]     //  overall look of outline
+	syntax varlist [if] [in] [aw/], [over(varname) by(varname) *]     //  overall look of outline
    
 	/*
 	[ alegend legend(string) color(string) colorpalette(string) by(string) ///
@@ -100,23 +100,27 @@ program joy_plot
 	marksample touse
 	** detect if
  
-	
+	fvexpand `varlist'
+	local vars:word count `r(varlist)'
+	if `vars'>1 & "`over'"!="" {
+		display in red "over cannot be combined with multiple variables"
+	}
 	markout `touse' `varlist' `over' `by' `exp' , strok
 	tempname frame
 	
 	if `c(stata_version)'>=16 {
 		frame put `varlist' `over' `by' `exp'  if `touse', into(`frame') 
-		syntax anything [aw] [if] [in], [*]
-		if "`by'"==""		qui:frame `frame': make_joy `anything' [`weight'`exp'], `options'
-		if "`by'"!=""		qui:frame `frame': make_joy2 `anything' [`weight'`exp'], `options'
+		syntax varlist [aw] [if] [in], [*]
+		if "`by'"==""    qui:frame `frame': make_joy  `varlist' [`weight'`exp'], `options'
+		if "`by'"!=""    qui:frame `frame': make_joy2 `varlist' [`weight'`exp'], `options'
 	}
 	if `c(stata_version)'<16 {
 		preserve
 			qui:keep `varlist' `over'  `by' `exp'  `touse'
-			qui:keep if `touse'
-			syntax anything [aw] [if] [in], [*]
-			if "`by'"==""		: make_joy `anything' [`weight'`exp'], `options'
-			if "`by'"!=""		: make_joy2 `anything' [`weight'`exp'], `options'
+			qui:keep if `touse'			
+			syntax varlist [aw] [if] [in], [*]
+			if "`by'"==""  qui: make_joy `varlist' [`weight'`exp'], `options'
+			if "`by'"!=""  qui: make_joy2 `varlist' [`weight'`exp'], `options'
 		restore
 	}
 	
@@ -165,7 +169,7 @@ program text_default, rclass
 end
 
 program make_joy
-	syntax varname [if] [in] [aw/], [over(varname) by(varname) ///
+	syntax varlist [if] [in] [aw/], [over(varname) by(varname) ///
 	radj(real 0)   /// Range Adjustment. How much to add or substract to the top bottom.
 	range(numlist min=2 max=2) ///
 	offset(real 0) /// to move text
@@ -197,6 +201,29 @@ program make_joy
 	if "`bwadj'"==""  local bwadj=0
 		
 ** make variable numeric with labels
+	** Expand for newvar
+	fvexpand `varlist'
+	local vars:word count `r(varlist)'
+	if `vars'>1 {
+		tempvar id over t fvar
+		gen double `id'=_n
+		expand `vars'
+		bysort `id':gen `over'=_n
+		gen double `fvar'=.
+		foreach i of varlist `varlist' {
+			local vcnt=`vcnt'+1
+			replace `fvar'=`i' if `over'==`vcnt'
+			local vn:variable label `i'
+			if "`vn'"=="" local vn `i'
+			local varlab `varlab' `vcnt' "`vn'"
+		}
+		label define varlab  `varlab' 
+		label values `over' varlab
+		label var `fvar' " "
+		local varlist `fvar'
+		
+	}
+
 		tempvar nb
  		_over `over', gen(`nb') var(`varlist')
 		local over `nb'
@@ -459,7 +486,7 @@ end
 
 *** This will do the over and by
 program make_joy2
-	syntax varname [if] [in] [aw/], [over(varname) by(varname) ///
+	syntax varlist [if] [in] [aw/], [over(varname) by(varname) ///
 	radj(real 0)   /// Range Adjustment. How much to add or substract to the top bottom.
 	range(numlist min=2 max=2) ///
 	offset(real 0) /// to move text
@@ -490,6 +517,36 @@ program make_joy2
 		
 	if "`bwadj'"==""  local bwadj=0
 	
+	fvexpand `varlist'
+	local vars:word count `r(varlist)'
+	if `vars'>1 {
+		tempvar id over t fvar
+		gen double `id'=_n
+		expand `vars'
+		bysort `id':gen `over'=_n
+		gen double `fvar'=.
+		foreach i of varlist `varlist' {
+			local vcnt=`vcnt'+1
+			replace `fvar'=`i' if `over'==`vcnt'
+			local vn:variable label `i'
+			if "`vn'"=="" local vn `i'
+			local varlab `varlab' `vcnt' "`vn'"
+		}
+		label define varlab  `varlab' 
+		label values `over' varlab
+		label var `fvar' " "
+		local varlist `fvar'
+		
+	}
+	
+	tempvar nb
+	_over `over', gen(`nb') var(`varlist')
+	local over `nb'
+	
+	tempvar nb2
+	_over `by', gen(`nb2') var(`varlist')
+	local by `nb2'
+	
 	if "`violin'"!="" {
 		tempvar nx
 		bysort `by':gen `nx'=_n
@@ -499,14 +556,6 @@ program make_joy2
 			error 222
 		}
 	}
-	** modify? instead of new variable?
-	tempvar nb
-	_over `over', gen(`nb') var(`varlist')
-	local over `nb'
-	
-	tempvar nb2
-	_over `by', gen(`nb2') var(`varlist')
-	local by `nb2'
 	
 		** Create Rage var
 		tempname rvar
